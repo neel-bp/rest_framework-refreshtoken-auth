@@ -1,9 +1,17 @@
-from typing import Tuple
+from datetime import timedelta
+from typing import Dict, Tuple
 from refreshing_token.models import RefreshToken,AccessToken
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
+from django.utils import timezone
+from rest_framework.exceptions import AuthenticationFailed
 
+def is_token_expired(token: str, lifetime: timedelta):
+    min_age = timezone.now() - lifetime
+    expired = token.created < min_age
+    return expired
 
-def generate_token_pair(user: AbstractUser):
+def generate_token_pair(user: AbstractUser) -> Dict[str,str]:
     """
     generates token pair for given user, user object must be of same type
     as settings.AUTH_USER_MODEL, returns a dict with access_token and 
@@ -45,14 +53,14 @@ def clean_refresh_tokens(user: AbstractUser) -> bool:
     in the case of logout, only the refresh token is blacklisted/deleted,
     don't really know why that is.
     """
-    count,_ = RefreshToken.objects.filter(user).delete()
+    count,_ = RefreshToken.objects.filter(user=user).delete()
     return count > 0
 
 def clean_access_tokens(user: AbstractUser) -> bool:
     """
     function for deleting access tokens of given user
     """
-    count,_ = AccessToken.objects.filter(user).delete()
+    count,_ = AccessToken.objects.filter(user=user).delete()
     return count > 0
 
 def clean_user_tokens(user: AbstractUser) -> Tuple[bool,bool]:
@@ -61,6 +69,43 @@ def clean_user_tokens(user: AbstractUser) -> Tuple[bool,bool]:
     returns a tuple of two bools, first value is for 
     access token and the second one for refresh token.
     """
-    count,_ = AccessToken.objects.filter(user).delete()
-    count_a,_ = RefreshToken.objects.filter(user).delete()
+    count,_ = AccessToken.objects.filter(user=user).delete()
+    count_a,_ = RefreshToken.objects.filter(user=user).delete()
     return (count > 0,count_a > 0)
+
+def create_access_token(user: AbstractUser, key: str = None) -> Tuple[str,bool]:
+    """
+    function for creating access token individually with an optional param for key
+    in case one want to use their own defined key as access token
+    """
+    count,_ = AccessToken.objects.filter(user=user).delete()
+    token = AccessToken.objects.create(user=user,key=key)
+    return token.key, count > 0
+
+def create_refresh_token(user: AbstractUser, key: str = None) -> Tuple[str,bool]:
+    """
+    function for creating access token individually with an optional param for key
+    in case one want to use their own defined key as refresh token
+    """
+    count,_ = RefreshToken.objects.filter(user=user).delete()
+    token = RefreshToken.objects.create(user=user,key=key)
+    return token.key, count > 0
+
+def refresh_access_token(user: AbstractUser, refresh_token: str, key: str = None) -> str:
+    try:
+        expiry = settings.REFRESH_TOKEN_LIFETIME
+    except:
+        expiry = timedelta(days=1)
+
+    expired = is_token_expired(refresh_token,expiry)
+    if expired:
+        clean_user_tokens(user)
+        raise AuthenticationFailed("Refresh Token has expired")
+
+    access_token,_ = create_access_token(user,key)
+
+    return access_token
+
+
+
+

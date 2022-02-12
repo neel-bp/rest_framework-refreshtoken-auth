@@ -1,23 +1,17 @@
 from datetime import timedelta
-
-from django.conf import settings
-from django.utils import timezone
 from rest_framework.authentication import TokenAuthentication
 from refreshing_token.models import AccessToken
 from rest_framework.exceptions import AuthenticationFailed
+from refreshing_token.util import is_token_expired
+from django.conf import settings
 
 
-def is_token_expired(token):
-    try:
-        days = settings.TOKEN_EXPIRED_AFTER_DAYS
-    except:
-        days = 30
-    min_age = timezone.now() - timedelta(days=days)
-    expired = token.created < min_age
-    return expired
 
 
 class ExpiringTokenAuthentication(TokenAuthentication):
+
+    model = AccessToken
+
     """Same as in DRF, but also handle Token expiration.
     
     An expired Token will be removed and a new Token with a different
@@ -28,15 +22,21 @@ class ExpiringTokenAuthentication(TokenAuthentication):
     to a 401 status code automatically.
     """
     def authenticate_credentials(self, key):
+        model = self.get_model()
         try:
-            token = AccessToken.objects.get(key=key)
-        except AccessToken.DoesNotExist:
+            token = model.objects.get(key=key)
+        except model.DoesNotExist:
             raise AuthenticationFailed("Invalid token")
 
         if not token.user.is_active:
             raise AuthenticationFailed("User inactive or deleted")
 
-        expired = is_token_expired(token)
+        try:
+            lifetime = settings.ACCESS_TOKEN_LIFETIME
+        except:
+            lifetime = timedelta(minutes=60)
+
+        expired = is_token_expired(token,lifetime)
         if expired:
             token.delete()
             # Token.objects.create(user=token.user)
