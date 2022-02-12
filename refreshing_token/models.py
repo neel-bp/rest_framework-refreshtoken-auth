@@ -19,7 +19,6 @@ class RefreshToken(models.Model):
     created = models.DateTimeField(_("Created"), auto_now_add=True)
 
     class Meta:
-        abstract = 'refreshing_token' not in settings.INSTALLED_APPS
         verbose_name = _("RefreshToken")
         verbose_name_plural = _("RefreshTokens")
 
@@ -46,15 +45,12 @@ class RefreshTokenProxy(RefreshToken):
 
     class Meta:
         proxy = 'refreshing_token' in settings.INSTALLED_APPS
-        abstract = 'refreshing_token' not in settings.INSTALLED_APPS
         verbose_name = "refresh_token"
 
 class AccessToken(Token):
     key = models.CharField(_("Key"), max_length=256, primary_key=True)
 
     class Meta:
-        
-        abstract = 'refreshing_token' not in settings.INSTALLED_APPS
         verbose_name = _("AccessToken")
         verbose_name_plural = _("AccessTokens")
 
@@ -62,5 +58,4 @@ class AccessTokenProxy(AccessToken):
 
     class Meta:
         proxy = 'refreshing_token' in settings.INSTALLED_APPS
-        abstract = 'refreshing_token' not in settings.INSTALLED_APPS
         verbose_name = "access_token"
