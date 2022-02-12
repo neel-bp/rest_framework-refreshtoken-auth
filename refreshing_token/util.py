@@ -91,18 +91,23 @@ def create_refresh_token(user: AbstractUser, key: str = None) -> Tuple[str,bool]
     token = RefreshToken.objects.create(user=user,key=key)
     return token.key, count > 0
 
-def refresh_access_token(user: AbstractUser, refresh_token: str, key: str = None) -> str:
+def refresh_access_token(refresh_token: str, key: str = None) -> str:
     try:
         expiry = settings.REFRESH_TOKEN_LIFETIME
     except:
         expiry = timedelta(days=1)
+    
+    try:
+        token_obj = RefreshToken.objects.get(key=refresh_token)
+    except RefreshToken.DoesNotExist:
+        raise AuthenticationFailed("Invalid Refresh token")
 
-    expired = is_token_expired(refresh_token,expiry)
+    expired = is_token_expired(token_obj,expiry)
     if expired:
-        clean_user_tokens(user)
+        clean_user_tokens(token_obj.user)
         raise AuthenticationFailed("Refresh Token has expired")
 
-    access_token,_ = create_access_token(user,key)
+    access_token,_ = create_access_token(token_obj.user,key)
 
     return access_token
 
