@@ -1,6 +1,5 @@
 from typing import Tuple
-from rest_framework.authtoken.models import Token
-from refreshing_token.models import RefreshToken
+from refreshing_token.models import RefreshToken,AccessToken
 from django.contrib.auth.models import AbstractUser
 
 
@@ -9,10 +8,12 @@ def generate_token_pair(user: AbstractUser):
     generates token pair for given user, user object must be of same type
     as settings.AUTH_USER_MODEL, returns a dict with access_token and 
     refresh_token.
+    if a token pair is already generated it is replaced by the
+    newly generated one.
     """
-    Token.objects.filter(user=user).delete()
+    AccessToken.objects.filter(user=user).delete()
     RefreshToken.objects.filter(user=user).delete()
-    access_token = Token.objects.create(user=user)
+    access_token = AccessToken.objects.create(user=user)
     refresh_token = RefreshToken.objects.create(user=user)
     return {"access_token":access_token.key,
         "refresh_token":refresh_token.key}
@@ -34,7 +35,7 @@ def discard_access_token(token: str, user: AbstractUser) -> bool:
     access token. doesn't return an error, returns True, 
     if something really was deleted or else False.
     """
-    count,_ = Token.objects.filter(key=token,user=user).delete()
+    count,_ = AccessToken.objects.filter(key=token,user=user).delete()
     return count > 0
 
 def clean_refresh_tokens(user: AbstractUser) -> bool:
@@ -51,7 +52,7 @@ def clean_access_tokens(user: AbstractUser) -> bool:
     """
     function for deleting access tokens of given user
     """
-    count,_ = Token.objects.filter(user).delete()
+    count,_ = AccessToken.objects.filter(user).delete()
     return count > 0
 
 def clean_user_tokens(user: AbstractUser) -> Tuple[bool,bool]:
@@ -60,6 +61,6 @@ def clean_user_tokens(user: AbstractUser) -> Tuple[bool,bool]:
     returns a tuple of two bools, first value is for 
     access token and the second one for refresh token.
     """
-    count,_ = Token.objects.filter(user).delete()
+    count,_ = AccessToken.objects.filter(user).delete()
     count_a,_ = RefreshToken.objects.filter(user).delete()
     return (count > 0,count_a > 0)

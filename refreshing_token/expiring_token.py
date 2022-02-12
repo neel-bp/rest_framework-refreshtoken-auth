@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
+from refreshing_token.models import AccessToken
 from rest_framework.exceptions import AuthenticationFailed
 
 
@@ -29,8 +29,8 @@ class ExpiringTokenAuthentication(TokenAuthentication):
     """
     def authenticate_credentials(self, key):
         try:
-            token = Token.objects.get(key=key)
-        except Token.DoesNotExist:
+            token = AccessToken.objects.get(key=key)
+        except AccessToken.DoesNotExist:
             raise AuthenticationFailed("Invalid token")
 
         if not token.user.is_active:
