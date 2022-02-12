@@ -33,7 +33,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
 
         try:
             lifetime = settings.ACCESS_TOKEN_LIFETIME
-        except:
+        except AttributeError:
             lifetime = timedelta(minutes=60)
 
         expired = is_token_expired(token,lifetime)

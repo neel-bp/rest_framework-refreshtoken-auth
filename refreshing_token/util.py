@@ -6,6 +6,10 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import AuthenticationFailed
 
+# TODO: write tests
+# TODO: docs
+# TODO: quick views
+
 def is_token_expired(token: str, lifetime: timedelta):
     min_age = timezone.now() - lifetime
     expired = token.created < min_age
@@ -94,7 +98,7 @@ def create_refresh_token(user: AbstractUser, key: str = None) -> Tuple[str,bool]
 def refresh_access_token(refresh_token: str, key: str = None) -> str:
     try:
         expiry = settings.REFRESH_TOKEN_LIFETIME
-    except:
+    except AttributeError:
         expiry = timedelta(days=1)
     
     try:
