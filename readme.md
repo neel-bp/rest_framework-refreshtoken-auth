@@ -38,8 +38,4 @@ REST_FRAMEWORK = {
 }
 ```
 
-
-
-
-
-
+finally run `python manage.py migrate` in your django project
