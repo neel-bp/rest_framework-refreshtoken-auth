@@ -8,7 +8,6 @@ from rest_framework.exceptions import AuthenticationFailed
 
 # TODO: write tests
 # TODO: docs
-# TODO: quick views
 
 def is_token_expired(token: str, lifetime: timedelta):
     min_age = timezone.now() - lifetime
