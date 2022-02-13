@@ -3,7 +3,6 @@ from refreshing_token.util import generate_token_pair, refresh_access_token
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import status
 
 class GenerateTokenPair(APIView):
