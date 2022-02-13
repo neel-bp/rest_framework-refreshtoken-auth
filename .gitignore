@@ -2,3 +2,6 @@ tokenproj/
 manage.py
 db.sqlite3
 __pycache__/
+build/
+dist/
+refreshing_token.egg-info/
