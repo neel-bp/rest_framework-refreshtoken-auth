@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 from refreshing_token.models import RefreshToken,AccessToken
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -9,7 +9,7 @@ from rest_framework.exceptions import AuthenticationFailed
 # TODO: write tests
 # TODO: docs
 
-def is_token_expired(token: str, lifetime: timedelta):
+def is_token_expired(token: Any, lifetime: timedelta):
     min_age = timezone.now() - lifetime
     expired = token.created < min_age
     return expired
@@ -113,6 +113,42 @@ def refresh_access_token(refresh_token: str, key: str = None) -> str:
     access_token,_ = create_access_token(token_obj.user,key)
 
     return access_token
+
+# have to take it for a spin
+def get_or_create_token_pair(user: AbstractUser) -> Dict[str,str]:
+    try:
+        access_expiry = settings.ACCESS_TOKEN_LIFETIME
+    except AttributeError:
+        access_expiry = timedelta(minutes=60)
+
+    try:
+        refresh_expiry = settings.REFRESH_TOKEN_LIFETIME
+    except AttributeError:
+        refresh_expiry = timedelta(days=1)
+
+    refresh_token,_ = RefreshToken.objects.get_or_create(user=user)
+    refresh_expired = is_token_expired(refresh_token,refresh_expiry)
+    if refresh_expired:
+        clean_user_tokens(user=user)
+        return generate_token_pair(user=user)
+    
+    access_token,_ = AccessToken.objects.get_or_create(user=user)
+    access_expired = is_token_expired(access_token,access_expiry)
+    if access_expired:
+        clean_access_tokens(user=user)
+        new_access_token,_ = create_access_token(user=user)
+        return {"access_token":new_access_token,
+            "refresh_token":refresh_token.key
+        }
+    return {
+        "access_token":access_token.key,
+        "refresh_token":refresh_token.key
+    }
+
+    
+
+
+    
 
 
 
