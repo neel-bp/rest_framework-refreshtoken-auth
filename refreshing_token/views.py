@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from refreshing_token.util import generate_token_pair, refresh_access_token
+from refreshing_token.util import refresh_access_token, get_or_create_token_pair
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +14,7 @@ class GenerateTokenPair(APIView):
         if user is None:
             return Response(data={"error":"no user found with provided username and password"},status=status.HTTP_401_UNAUTHORIZED)
         
-        token_pair = generate_token_pair(user)
+        token_pair = get_or_create_token_pair(user)
 
         return Response(data=token_pair)  
 

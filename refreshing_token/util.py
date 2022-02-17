@@ -116,6 +116,15 @@ def refresh_access_token(refresh_token: str, key: str = None) -> str:
 
 # have to take it for a spin
 def get_or_create_token_pair(user: AbstractUser) -> Dict[str,str]:
+    """
+    utility function for returning same token pair if it already exists
+    it could be useful in case you don't want a user to be logged out from
+    one device if they log in from another, ideally every device should have its own
+    token pair.
+    If refresh token is expired or isn't found both refresh token and access token
+    are generated entirely, but if only the access token is expired it is generated and current
+    active refresh token is returned.
+    """
     try:
         access_expiry = settings.ACCESS_TOKEN_LIFETIME
     except AttributeError:
