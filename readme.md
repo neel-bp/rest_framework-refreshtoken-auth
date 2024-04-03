@@ -1,5 +1,4 @@
-
-## summery
+---
 this package adds some extra features to 
 djangorestframework's Token Authentication like refresh
 token, lifetime for refresh token and authorization token.
